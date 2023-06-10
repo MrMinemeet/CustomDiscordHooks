@@ -1,6 +1,7 @@
 import requests
 
-def send_message(webhook:str, message:str) -> int:
+
+def send_message(webhook: str, message: str) -> int:
     """Sends a message to a Discord Webhook
 
     Args:
