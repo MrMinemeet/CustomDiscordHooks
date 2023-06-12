@@ -1,5 +1,4 @@
 import datetime
-import os
 
 import requests
 from bs4 import BeautifulSoup
@@ -38,28 +37,35 @@ def number_to_weekday(number: int) -> str:
     return weekdays.get(number)
 
 
+def load_webhooks():
+    """
+    Loads the webhooks from the webhook file
+    Returns: A list of webhooks
+    """
+    try:
+        with open("mensen_webhooks.txt", "r") as f:
+            lines = f.readlines()
+            return [line.strip() for line in lines]
+    except FileNotFoundError:
+        print("Error: Could not find webhook file")
+        exit(2)
+
+
+
 if __name__ == "__main__":
-    # Get WebHook URL from environment variable
-    WEBHOOK_URL = os.environ.get("DAILY_MENSA_WEBHOOK_URL")
-
-    if WEBHOOK_URL is None:
-        raise ValueError("Environment variable DAILY_MENSA_WEBHOOK_URL is not set")
-
     response = requests.get(URL, cookies=COOKIES, timeout=60)
 
     if response.status_code != 200:
-        send_message(WEBHOOK_URL, "Error: " + str(response.status_code))
+        print("Error: Could not load mensa page. Status code: " + str(response.status_code))
         exit(1)
 
     soup = BeautifulSoup(response.text, "html.parser")
 
     numericDay = datetime.datetime.today().weekday() + 1  # Monday = 1, …, Sunday = 7
-
     message = ""
     if numericDay >= 6:
         numericDay = 1
         # TODO: Set it to the next Monday if it is Saturday or Sunday
-        send_message(WEBHOOK_URL, "**The mensa is closed today.**")
         exit(0)
 
     # Left (Menu 1 + Daily Plate)
@@ -81,4 +87,5 @@ if __name__ == "__main__":
         daily_plate="> " + daily_plate.split("\n", 1)[1].replace("\n", "\n> ")
     )
 
-    send_message(WEBHOOK_URL, message)
+    for webhook in load_webhooks():
+        send_message(webhook, message)
