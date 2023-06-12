@@ -154,3 +154,5 @@ cython_debug/
 
 # Jetbrains IDEs
 .idea/
+
+mensen_webhooks.txt
