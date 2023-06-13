@@ -5,6 +5,8 @@ from bs4 import BeautifulSoup
 
 from Util import send_message
 
+from os import path
+
 URL = "https://www.mensen.at/"
 COOKIES = {"mensenExtLocation": "1"}  # Set cookie for specific mensa entry (1 = JKU Linz Mensa)
 
@@ -43,11 +45,12 @@ def load_webhooks():
     Returns: A list of webhooks
     """
     try:
-        with open("mensen_webhooks.txt", "r") as f:
+        webhook_path = path.join(path.dirname(path.abspath(__file__)), "mensen_webhooks.txt")
+        with open(webhook_path, "r", encoding='utf-8') as f:
             lines = f.readlines()
             return [line.strip() for line in lines]
     except FileNotFoundError:
-        print("Error: Could not find webhook file")
+        print("Error: Could not open webhook file")
         exit(2)
 
 
