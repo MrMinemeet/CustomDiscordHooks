@@ -1,25 +1,8 @@
 import datetime
-
+from os import path
 import requests
 from bs4 import BeautifulSoup
-
 from Util import send_message
-
-from os import path
-
-URL = "https://www.mensen.at/"
-COOKIES = {"mensenExtLocation": "1"}  # Set cookie for specific mensa entry (1 = JKU Linz Mensa)
-
-MESSAGE_TEMPLATE = """__***Mensa JKU Linz - {weekday}***__
-
-**Menu Classic 1**
-{menu_classic_1}
-
-**Menu Classic 2**
-{menu_classic_2}
-
-**Tagesteller**
-{daily_plate}"""
 
 
 def number_to_weekday(number: int) -> str:
@@ -38,8 +21,7 @@ def number_to_weekday(number: int) -> str:
 
     return weekdays.get(number)
 
-
-def load_webhooks():
+def load_webhooks() -> list[str]:
     """
     Loads the webhooks from the webhook file
     Returns: A list of webhooks
@@ -53,9 +35,26 @@ def load_webhooks():
         print("Error: Could not open webhook file")
         exit(2)
 
+def get_jku_mensa() -> str:
+    """
+    Gets the menu for the JKU Mensa
+    Returns: A string containing the menu
+    """
 
+    MESSAGE_TEMPLATE = """__***JKU Linz Mensa - {weekday}***__
 
-if __name__ == "__main__":
+    **Menu Classic 1**
+    {menu_classic_1}
+
+    **Menu Classic 2**
+    {menu_classic_2}
+
+    **Tagesteller**
+    {daily_plate}"""
+
+    URL = "https://www.mensen.at/"
+    COOKIES = {"mensenExtLocation": "1"}  # Set cookie for specific mensa entry (1 = JKU Linz Mensa)
+
     response = requests.get(URL, cookies=COOKIES, timeout=60)
 
     if response.status_code != 200:
@@ -65,7 +64,6 @@ if __name__ == "__main__":
     soup = BeautifulSoup(response.text, "html.parser")
 
     numericDay = datetime.datetime.today().weekday() + 1  # Monday = 1, …, Sunday = 7
-    message = ""
     if numericDay >= 6:
         numericDay = 1
         # TODO: Set it to the next Monday if it is Saturday or Sunday
@@ -83,12 +81,17 @@ if __name__ == "__main__":
     menu_classic_2 = menu_items.text.strip()
 
     # Send message
-    message += MESSAGE_TEMPLATE.format(
+    return MESSAGE_TEMPLATE.format(
         weekday=number_to_weekday(numericDay),
         menu_classic_1="> " + menu_classic_1.split("\n", 1)[1].replace("\n", "\n> "),
         menu_classic_2="> " + menu_classic_2.split("\n", 1)[1].replace("\n", "\n> "),
         daily_plate="> " + daily_plate.split("\n", 1)[1].replace("\n", "\n> ")
     )
+
+if __name__ == "__main__":
+
+    message = get_jku_mensa()
+
 
     for webhook in load_webhooks():
         send_message(webhook, message)
