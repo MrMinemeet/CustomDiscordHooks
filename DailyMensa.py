@@ -1,5 +1,6 @@
 import datetime
 from os import path
+import sys
 import requests
 from bs4 import BeautifulSoup
 from Util import send_message
@@ -33,7 +34,7 @@ def load_webhooks() -> list[str]:
             return [line.strip() for line in lines]
     except FileNotFoundError:
         print("Error: Could not open webhook file")
-        exit(2)
+        sys.exit(2)
 
 def get_jku_mensa() -> str:
     """
@@ -59,7 +60,7 @@ def get_jku_mensa() -> str:
 
     if response.status_code != 200:
         print("Error: Could not load mensa page. Status code: " + str(response.status_code))
-        exit(1)
+        sys.exit(1)
 
     soup = BeautifulSoup(response.text, "html.parser")
 
@@ -67,7 +68,7 @@ def get_jku_mensa() -> str:
     if numericDay >= 6:
         numericDay = 1
         # TODO: Set it to the next Monday if it is Saturday or Sunday
-        exit(0)
+        sys.exit(0)
 
     # Left (Menu 1 + Daily Plate)
     menu_categories = soup.find("div", {"class": "menu-left"}).find("div", recursive=False)
