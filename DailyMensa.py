@@ -36,7 +36,7 @@ def load_webhooks() -> list[str]:
         print("Error: Could not open webhook file")
         sys.exit(2)
 
-def get_jku_mensa() -> str:
+def get_jku_mensa(numericDay: int) -> str:
     """
     Gets the menu for the JKU Mensa
     Returns: A string containing the menu
@@ -64,11 +64,6 @@ def get_jku_mensa() -> str:
 
     soup = BeautifulSoup(response.text, "html.parser")
 
-    numericDay = datetime.datetime.today().weekday() + 1  # Monday = 1, …, Sunday = 7
-    if numericDay >= 6:
-        numericDay = 1
-        # TODO: Set it to the next Monday if it is Saturday or Sunday
-        sys.exit(0)
 
     # Left (Menu 1 + Daily Plate)
     menu_categories = soup.find("div", {"class": "menu-left"}).find("div", recursive=False)
@@ -89,9 +84,78 @@ def get_jku_mensa() -> str:
         daily_plate="> " + daily_plate.split("\n", 1)[1].replace("\n", "\n> ")
     )
 
-if __name__ == "__main__":
+def get_raab_mensa(numericDay: int) -> str:
+    """
+    Gets the menu for the Raab Mensa
+    Returns: A string containing the menu
+    """
 
-    message = get_jku_mensa()
+    MESSAGE_TEMPLATE = """__***Raab Mensa - {weekday}***__
+
+    **MENU 1**
+    {menu_1}
+
+    **MENU 2**
+    {menu_2}
+    """
+
+    URL = "https://www.mittag.at/r/raabmensa"
+
+    response = requests.get(URL, timeout=60)
+
+    if response.status_code != 200:
+        print("Error: Could not load mensa page. Status code: " + str(response.status_code))
+        sys.exit(1)
+
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    menus = soup.find("div", {"class": "current-menu"})
+
+    msg = ""
+
+    for e in menus:
+        e = str(e)
+        if "<br/>" in e:
+            msg += "\n"
+        else:
+            msg += e
+
+    msg = msg.replace("\n\n", "\n").split("MENÜ 1",1)[1].split("MENÜ 2")
+    if len(msg[0].strip()) == 0:
+        msg[0] = "Kein Menü 1"
+    if len(msg[1].strip()) == 0:
+        msg[1] = "Kein Menü 2"
+        
+    menu1 = msg[0].strip().replace("\n", "\n> ").strip()
+    menu2 = msg[1].strip().replace("\n", "\n> ").strip()
+
+    # Send message
+    return MESSAGE_TEMPLATE.format(
+        weekday=number_to_weekday(numericDay),
+        menu_1="> " + menu1,
+        menu_2="> " + menu2
+    )
+
+if __name__ == "__main__":
+    numericDay = datetime.datetime.today().weekday() + 1  # Monday = 1, …, Sunday = 7
+    if numericDay >= 6:
+        numericDay = 1
+        # TODO: Set it to the next Monday if it is Saturday or Sunday
+        sys.exit(0)
+
+    message = ""
+
+    try:
+        message += get_jku_mensa(numericDay)
+    except Exception as e:
+        print(f"Failed to get information from JKU Mensa: {str(e)}")
+
+    message += "\n\n"
+
+    try:
+        message += get_raab_mensa(numericDay)
+    except Exception as e:
+        print(f"Failed to get information Raab Mensa: {str(e)}")
 
 
     for webhook in load_webhooks():
