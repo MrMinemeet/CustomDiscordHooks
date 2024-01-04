@@ -7,6 +7,13 @@ from Util import send_message
 
 
 def number_to_weekday(number: int) -> str:
+    """
+    Converts a number to a weekday
+    Args:
+        number: A number between 1 and 7
+    Returns: The weekday as a string
+    """
+
     if number < 1 or number > 7:
         raise ValueError("Number must be between 1 and 7 but was " + str(number))
 
@@ -70,18 +77,38 @@ def get_jku_mensa(numericDay: int) -> str:
     menu_items = menu_categories.find_all("div", {"class": "menu-item-" + str(numericDay)})
     menu_classic_1 = menu_items[0].text.strip()
     daily_plate = menu_items[1].text.strip()
+    menu_classic_1 = menu_classic_1.split("\n", 1)
+
+    if len(menu_classic_1) == 2:
+        menu_classic_1 = menu_classic_1[1]
+    else:
+        menu_classic_1 = "Kein Menü 1"
+
+    daily_plate = daily_plate.split("\n", 1)[1]
+
+    if len(daily_plate) == 2:
+        daily_plate = daily_plate[1]
+    else:
+        daily_plate = "Kein Tagesteller"
 
     # Right (Menu 2) get item
     menu_categories = soup.find("div", {"class": "menu-right"}).find("div", recursive=False)
     menu_items = menu_categories.find("div", {"class": "menu-item-" + str(numericDay)})
     menu_classic_2 = menu_items.text.strip()
+    menu_classic_2 = menu_classic_2.split("\n", 1)
+
+    if len(menu_classic_2) == 2:
+        menu_classic_2 = menu_classic_2[1]
+    else:
+        menu_classic_2 = "Kein Menü 2"
+    
 
     # Send message
     return MESSAGE_TEMPLATE.format(
         weekday=number_to_weekday(numericDay),
-        menu_classic_1="> " + menu_classic_1.split("\n", 1)[1].replace("\n", "\n> "),
-        menu_classic_2="> " + menu_classic_2.split("\n", 1)[1].replace("\n", "\n> "),
-        daily_plate="> " + daily_plate.split("\n", 1)[1].replace("\n", "\n> ")
+        menu_classic_1="> " + menu_classic_1.replace("\n", "\n> "),
+        menu_classic_2="> " + menu_classic_2.replace("\n", "\n> "),
+        daily_plate="> " + daily_plate.replace("\n", "\n> ")
     )
 
 def get_raab_mensa(numericDay: int) -> str:
@@ -125,7 +152,7 @@ def get_raab_mensa(numericDay: int) -> str:
         msg[0] = "Kein Menü 1"
     if len(msg[1].strip()) == 0:
         msg[1] = "Kein Menü 2"
-        
+
     menu1 = msg[0].strip().replace("\n", "\n> ").strip()
     menu2 = msg[1].strip().replace("\n", "\n> ").strip()
 
@@ -137,23 +164,23 @@ def get_raab_mensa(numericDay: int) -> str:
     )
 
 if __name__ == "__main__":
-    numericDay = datetime.datetime.today().weekday() + 1  # Monday = 1, …, Sunday = 7
-    if numericDay >= 6:
-        numericDay = 1
+    NUMERIC_DAY = datetime.datetime.today().weekday() + 1  # Monday = 1, …, Sunday = 7
+    if NUMERIC_DAY >= 6:
+        NUMERIC_DAY = 1
         # TODO: Set it to the next Monday if it is Saturday or Sunday
         sys.exit(0)
 
     message = ""
 
     try:
-        message += get_jku_mensa(numericDay)
+        message += get_jku_mensa(NUMERIC_DAY)
     except Exception as e:
         print(f"Failed to get information from JKU Mensa: {str(e)}")
 
     message += "\n\n"
 
     try:
-        message += get_raab_mensa(numericDay)
+        message += get_raab_mensa(NUMERIC_DAY)
     except Exception as e:
         print(f"Failed to get information Raab Mensa: {str(e)}")
 
