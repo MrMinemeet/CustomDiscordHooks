@@ -86,9 +86,7 @@ def get_jku_mensa(numericDay: int) -> str:
 
     daily_plate = daily_plate.split("\n", 1)[1]
 
-    if len(daily_plate) == 2:
-        daily_plate = daily_plate[1]
-    else:
+    if len(daily_plate) == 0:
         daily_plate = "Kein Tagesteller"
 
     # Right (Menu 2) get item
