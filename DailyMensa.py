@@ -75,8 +75,8 @@ def get_jku_mensa(numericDay: int) -> str:
     # Left (Menu 1 + Daily Plate)
     menu_categories = soup.find("div", {"class": "menu-left"}).find("div", recursive=False)
     menu_items = menu_categories.find_all("div", {"class": "menu-item-" + str(numericDay)})
-    menu_classic_1 = menu_items[0].text.strip()
-    daily_plate = menu_items[1].text.strip()
+    menu_classic_1 = str(menu_items[0].text.strip())
+    daily_plate = str(menu_items[1].text.strip())
     menu_classic_1 = menu_classic_1.split("\n", 1)
 
     if len(menu_classic_1) == 2:
@@ -88,11 +88,24 @@ def get_jku_mensa(numericDay: int) -> str:
 
     if len(daily_plate) == 0:
         daily_plate = "Kein Tagesteller"
+    else:
+        split_daily_plates = daily_plate.split("\nTagesgericht")
+
+        if len(split_daily_plates) > 1:
+            split_daily_plates[1] = f"Tagesgericht {split_daily_plates[1]}"
+
+        daily_plate = ""
+        for split in split_daily_plates:
+            plate_split = split.split("\n", 1)
+            daily_plate += f"**{plate_split[0].strip()}**\n{plate_split[1].replace("\n", " ").strip()}\n"
+            
+
+
 
     # Right (Menu 2) get item
     menu_categories = soup.find("div", {"class": "menu-right"}).find("div", recursive=False)
     menu_items = menu_categories.find("div", {"class": "menu-item-" + str(numericDay)})
-    menu_classic_2 = menu_items.text.strip()
+    menu_classic_2 = str(menu_items.text.strip())
     menu_classic_2 = menu_classic_2.split("\n", 1)
 
     if len(menu_classic_2) == 2:
@@ -106,7 +119,7 @@ def get_jku_mensa(numericDay: int) -> str:
         weekday=number_to_weekday(numericDay),
         menu_classic_1="> " + menu_classic_1.replace("\n", "\n> "),
         menu_classic_2="> " + menu_classic_2.replace("\n", "\n> "),
-        daily_plate="> " + daily_plate.replace("\n", "\n> ")
+        daily_plate="> " + daily_plate.strip().replace("\n", "\n> ")
     )
 
 def get_raab_mensa(numericDay: int) -> str:
