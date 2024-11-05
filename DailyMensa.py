@@ -98,9 +98,6 @@ def get_jku_mensa(numericDay: int) -> str:
         for split in split_daily_plates:
             plate_split = split.split("\n", 1)
             daily_plate += f"**{plate_split[0].strip()}**\n{plate_split[1].replace("\n", " ").strip()}\n"
-            
-
-
 
     # Right (Menu 2) get item
     menu_categories = soup.find("div", {"class": "menu-right"}).find("div", recursive=False)
@@ -112,6 +109,10 @@ def get_jku_mensa(numericDay: int) -> str:
         menu_classic_2 = menu_classic_2[1]
     else:
         menu_classic_2 = "Kein Menü 2"
+
+    #  Mensa Markt Mix & Match
+    menu_categories = soup.find("div", {"class": "menu-right"}).find("div", recursive=False)
+    # TODO: Mensa Markt Mix & Match should be in the right column, but the view is fucked up so I'll add this todo for now
     
 
     # Send message
