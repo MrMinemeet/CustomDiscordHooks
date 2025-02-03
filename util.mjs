@@ -3,8 +3,9 @@
  * This file contains utility functions for other scripts in this repository.
  */
 
-import * as fsp from "fs/promises";
+import * as fsp from "node:fs/promises";
 import axios from "axios";
+import { JSDOM } from "jsdom";
 
 /**
  * Converts a week day number to a string.
@@ -50,4 +51,19 @@ export async function sendMessage(hook, message) {
 			reject(new Error(`Failed to send message to discord webhook: ${err}`));
 		});
 	});
+}
+
+/**
+ * Fetches the page body from a URL and returns it as a JSDOM object.
+ * @param {string} url The URL to fetch the page body from
+ * @returns { Promise<JSDOM | null> } The page body as a JSDOM object or null if the page could not be fetched
+ */
+export async function getPagebody(url) {
+	try {
+		const html = (await axios.get(url)).data;
+		return new JSDOM(html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, ""));
+	} catch (error) {
+		console.error("Error fetching JKU Mensa", error);
+		return null;
+	}
 }

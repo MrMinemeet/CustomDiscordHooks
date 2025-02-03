@@ -7,9 +7,7 @@
  * The file is intended to be run as a cron job.
  * The "mensen.txt" must contain only one hook URL per line.
  */
-import axios from "axios";
-import { JSDOM } from "jsdom";
-import { loadHooks, numberToWeekday, sendMessage } from "./util.mjs";
+import { getPagebody, loadHooks, numberToWeekday, sendMessage } from "./util.mjs";
 
 /**
  * Fetches the menu from the JKU Mensa
@@ -21,15 +19,10 @@ async function getJkuMensa(dayNumber) {
 	// Therefore, I stick to scraping the website.
 	const URL = "https://www.mensen.at/standort/mensa-jku/"
 
-	let html = "";
-	try {
-		const response = (await axios.get(URL))
-		html = response.data;
-	} catch (error) {
-		console.error("Error fetching JKU Mensa", error);
-		return "Failed to get data from JKU Mensa";
+	const dom = await getPagebody(URL);
+	if (dom == null) {
+		return "Could not fetch menu for JKU Mensa";
 	}
-	const dom = new JSDOM(html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, ""));
 
 	const swiper = dom.window.document.querySelector(".swiper-wrapper");
 	if (swiper == null || swiper.children.length < dayNumber) {
@@ -77,8 +70,45 @@ async function getJkuMensa(dayNumber) {
 async function getRaabMensa(dayNumber) {
 	const URL = "https://www.mittag.at/r/raabmensa";
 
-	const html = (await axios.get(URL)).data;
+	const dom = await getPagebody(URL);
+	if (dom == null) {
+		return "Could not fetch menu for Raab Mensa";
+	}
 
+	const menus = dom.window.document.querySelector("div.current-menu");
+	if (menus == null) {
+		return "Could not find menu for Raab Mensa";
+	}
+	
+	const menusCombined = menus.innerHTML?.split("<br>").filter((line) => line.trim() !== "");
+	if (menusCombined == null) {
+		return "Could not find menu for Raab Mensa";
+	}
+
+	const menu2Idx = menusCombined.findIndex(line => line.includes("MENÜ 2"))
+	const menu1Split = menusCombined.slice(0, menu2Idx);
+	const menu2Split = menusCombined.slice(menu2Idx);
+
+	// The ".shift" is to remove the menu number from the array
+	menu1Split.shift();
+	menu2Split.shift();
+
+	let menu = `__**Raab Mensa - ${numberToWeekday(dayNumber)}**__\n`;
+	menu += `* **Menü 1**\n`;
+	if (menu1Split.length > 0) {
+		menu += `  ${menu1Split.join("\n  ")}\n`;
+	} else {
+		menu += "  Kein Menü 1\n";
+	}
+
+	menu += `* **Menü 2**\n`;
+	if (menu2Split.length > 0) {
+		menu += `  ${menu2Split.join("\n")}\n`;
+	} else {
+		menu += "  Kein Menü 2\n";
+	}
+
+	return menu;
 }
 
 /**
