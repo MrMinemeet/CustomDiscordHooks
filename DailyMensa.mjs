@@ -9,6 +9,18 @@
  */
 import { getPagebody, loadHooks, numberToWeekday, sendMessage } from "./util.mjs";
 
+Promise.all([loadHooks("mensen.txt"), getMensen(new Date().getDay())])
+	.then(([hooks, message]) => {
+		for (const hook of hooks) {
+			try {
+				sendMessage(hook, message);
+			} catch (e) {
+				console.warn(`Failed to send message to '${hook}'`);
+			}
+		}	
+	}).catch(e => console.error("Something went very wrong", e));
+
+//------------------------------------------------------------------------------
 /**
  * Fetches the menu from the JKU Mensa
  * @param {number} dayNumber A week day number [1, 7]
@@ -79,7 +91,7 @@ async function getRaabMensa(dayNumber) {
 	if (menus == null) {
 		return "Could not find menu for Raab Mensa";
 	}
-	
+
 	const menusCombined = menus.innerHTML?.split("<br>").filter((line) => line.trim() !== "");
 	if (menusCombined == null) {
 		return "Could not find menu for Raab Mensa";
@@ -114,21 +126,25 @@ async function getRaabMensa(dayNumber) {
 /**
  * Performs the actual fetching and hook call
  * @param {number} dayNumber A week day number [1, 7]
+ * @returns {Promise<string>} The menus as a string
  */
 async function getMensen(dayNumber) {
-	const hooks = loadHooks("mensen.txt");
-
 	let message = "";
 
 	const jkuMenu = getJkuMensa(dayNumber);
 	const raabMenu = getRaabMensa(dayNumber);
 
-	message += `${await jkuMenu}\n\n`;
-	message += `${await raabMenu}`;
-
-	for (const hook of await hooks) {
-		await sendMessage(hook, message);
+	try {
+		message += `${await jkuMenu}\n\n`;
+	} catch (e) {
+		console.error(e);
+		message += "Something went wrong while fetching the JKU Mensa menu\n";
 	}
+	try {
+		message += `${await raabMenu}`;
+	} catch (e) {
+		console.error(e);
+		message += "Something went wrong while fetching the Raab Mensa menu\n";
+	}
+	return message;
 }
-
-await getMensen(new Date().getDay());
