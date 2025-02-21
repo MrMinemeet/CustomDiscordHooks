@@ -1,8 +1,12 @@
 // @ts-check
+/*
+ * This work © 2025 by Alexander Voglsperger is licensed under the MIT license
+ * To view a copy of this license, see the provided LICENSE file or visit https://github.com/MrMinemeet/CustomDiscordHooks/blob/main/LICENSE
+ */
+
 /**
  * This file contains utility functions for other scripts in this repository.
  */
-
 import * as fsp from "node:fs/promises";
 import axios from "axios";
 import { JSDOM } from "jsdom";

@@ -1,4 +1,9 @@
 // @ts-check
+/*
+ * This work © 2025 by Alexander Voglsperger is licensed under the MIT license
+ * To view a copy of this license, see the provided LICENSE file or visit https://github.com/MrMinemeet/CustomDiscordHooks/blob/main/LICENSE
+ */
+
 /**
  * This file is the entry point for DailyMensa.
  * It automatically scrapes menu data from various sources (e.g. JKU mensa)
