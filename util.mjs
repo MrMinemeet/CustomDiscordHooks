@@ -17,11 +17,11 @@ import { JSDOM } from "jsdom";
  * @returns {string} The week day as a string (e.g. 1 -> "Montag", ...)
  */
 export function numberToWeekday(dayNumber) {
-	if (dayNumber < 0 || 7 < dayNumber) {
+	if (dayNumber < 1 || 7 < dayNumber) {
 		throw new Error("Invalid day number");
 	}
 	const days = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
-	return days[dayNumber];
+	return days[dayNumber - 1];
 }
 
 /**
